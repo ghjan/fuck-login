@@ -14,6 +14,7 @@ Update
 - date   : "2016.4.21"
 '''
 import requests
+
 try:
     import cookielib
 except:
@@ -21,14 +22,21 @@ except:
 import re
 import time
 import os.path
+
 try:
     from PIL import Image
 except:
     pass
 
+# import sys
+
+# PROJECT_ROOT = os.path.normpath((os.path.dirname(__file__)))
+
+from settings import *
 
 # 构造 Request headers
-agent = 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36'
+agent = AGENT or 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Mobile Safari/537.36'
+
 headers = {
     "Host": "www.zhihu.com",
     "Referer": "https://www.zhihu.com/",
@@ -53,7 +61,7 @@ def get_xsrf():
     pattern = r'name="_xsrf" value="(.*?)"'
     # 这里的_xsrf 返回的是一个list
     _xsrf = re.findall(pattern, html)
-    return _xsrf[0]
+    return _xsrf[0] if _xsrf else None
 
 
 # 获取验证码
@@ -87,30 +95,24 @@ def isLogin():
 
 
 def login(secret, account):
-    _xsrf = get_xsrf()
+    _xsrf = get_xsrf() or XSRF
     headers["X-Xsrftoken"] = _xsrf
     headers["X-Requested-With"] = "XMLHttpRequest"
     # 通过输入的用户名判断是否是手机号
     if re.match(r"^1\d{10}$", account):
         print("手机号登录 \n")
         post_url = 'https://www.zhihu.com/login/phone_num'
-        postdata = {
-            '_xsrf': _xsrf,
-            'password': secret,
-            'phone_num': account
-        }
+    elif "@" in account:
+        print("邮箱登录 \n")
     else:
-        if "@" in account:
-            print("邮箱登录 \n")
-        else:
-            print("你的账号输入有问题，请重新登录")
-            return 0
-        post_url = 'https://www.zhihu.com/login/email'
-        postdata = {
-            '_xsrf': _xsrf,
-            'password': secret,
-            'email': account
-        }
+        print("你的账号输入有问题，请重新登录")
+        return 0
+    post_url = 'https://www.zhihu.com/login/email'
+    postdata = {
+        '_xsrf': _xsrf,
+        'password': secret,
+        'email': account
+    }
     # 不需要验证码直接登录成功
     login_page = session.post(post_url, data=postdata, headers=headers)
     login_code = login_page.json()
@@ -125,16 +127,16 @@ def login(secret, account):
     # 下次可以使用 cookie 直接登录，不需要输入账号和密码
     session.cookies.save()
 
+
 try:
     input = raw_input
 except:
     pass
 
-
 if __name__ == '__main__':
     if isLogin():
         print('您已经登录')
     else:
-        account = input('请输入你的用户名\n>  ')
-        secret = input("请输入你的密码\n>  ")
+        account = EMAIL or input('请输入你的用户名\n>  ')
+        secret = PASSWORD or input("请输入你的密码\n>  ")
         login(secret, account)

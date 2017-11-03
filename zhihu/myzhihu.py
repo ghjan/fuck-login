@@ -11,6 +11,7 @@ import requests
 from bs4 import BeautifulSoup
 import os, time
 import re
+
 # import http.cookiejar as cookielib
 
 # 构造 Request headers
@@ -39,8 +40,8 @@ print("获取到的xsrf_token为： ", xsrf_token)
 
 ########## 获取验证码文件
 randomtime = str(int(time.time() * 1000))
-captchaurl = 'https://www.zhihu.com/captcha.gif?r='+\
-             randomtime+"&type=login"
+captchaurl = 'https://www.zhihu.com/captcha.gif?r=' + \
+             randomtime + "&type=login"
 captcharesponse = session.get(url=captchaurl, headers=headers)
 with open('checkcode.gif', 'wb') as f:
     f.write(captcharesponse.content)
@@ -62,7 +63,7 @@ loginresponse = session.post(url=loginurl, headers=headers, data=postdata)
 print('服务器端返回响应码：', loginresponse.status_code)
 print(loginresponse.json())
 # 验证码问题输入导致失败: 猜测这个问题是由于session中对于验证码的请求过期导致
-if loginresponse.json()['r']==1:
+if loginresponse.json()['r'] == 1:
     # 重新输入验证码，再次运行代码则正常。也就是说可以再第一次不输入验证码，或者输入一个错误的验证码，只有第二次才是有效的
     randomtime = str(int(time.time() * 1000))
     captchaurl = 'https://www.zhihu.com/captcha.gif?r=' + \
@@ -79,9 +80,6 @@ if loginresponse.json()['r']==1:
     loginresponse = session.post(url=loginurl, headers=headers, data=postdata)
     print('服务器端返回响应码：', loginresponse.status_code)
     print(loginresponse.json())
-
-
-
 
 ##########################保存登陆后的cookie信息
 # session.cookies.save()
